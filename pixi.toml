@@ -6,6 +6,51 @@ platforms = ["osx-arm64"]
 version = "0.1.0"
 
 [tasks]
+# Build tasks
+build = "mvn clean compile package"
+clean = "mvn clean"
+compile = "mvn compile"
+package = "mvn package"
+
+# Test tasks
+test = "mvn test"
+test-verbose = "mvn test -X"
+test-single = { cmd = "mvn test -Dtest=$TEST_CLASS", description = "Run a single test class (use: magic run test-single TEST_CLASS=YourTestClass)" }
+
+# Documentation tasks
+docs = "mvn javadoc:javadoc"
+docs-open = { cmd = "open target/site/apidocs/index.html", description = "Generate and open documentation (macOS)" }
+
+# Application run tasks
+run = { cmd = "java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar", description = "Run the main application" }
+run-with-args = { cmd = "java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar $ARGS", description = "Run with arguments (use: magic run run-with-args ARGS='your args')" }
+
+# Development tasks
+dev-build = { cmd = "./scripts/build/build.sh", description = "Run the development build script" }
+dev-run = { cmd = "./scripts/build/build.sh -p dev", description = "Run the development build script" }
+
+# Security and monitoring tasks
+security-scan = { cmd = "mvn org.owasp:dependency-check-maven:check", description = "Run OWASP dependency security scan" }
+lint = { cmd = "mvn checkstyle:check", description = "Run code style checks" }
+
+# Backup and maintenance tasks
+backup-create = { cmd = "mkdir -p backup/$(date +%Y%m%d_%H%M%S) && cp -r src configs backup/$(date +%Y%m%d_%H%M%S)/", description = "Create timestamped backup" }
+logs-clean = { cmd = "rm -rf logs/*.log", description = "Clean application logs" }
+target-clean = { cmd = "rm -rf target/", description = "Clean Maven target directory" }
+
+# Utility tasks
+deps-tree = "mvn dependency:tree"
+deps-analyze = "mvn dependency:analyze"
+version-check = "mvn versions:display-dependency-updates"
+
+# Combined workflow tasks
+full-build = { cmd = "magic run clean && magic run build && magic run test && magic run docs", description = "Complete build, test, and documentation generation" }
+quick-start = { cmd = "magic run build && magic run run", description = "Quick build and run" }
+dev-setup = { cmd = "magic run clean && magic run compile && magic run test", description = "Development setup - clean, compile, and test" }
+
+# Project management tasks
+init-project = { cmd = "mkdir -p src/main/java src/test/java src/main/resources logs backup", description = "Initialize project directories" }
+project-info = { cmd = "echo 'MTU Validator Project' && mvn help:system && java -version", description = "Display project and system information" }
 
 [dependencies]
 maven = ">=3.9.10,<4"

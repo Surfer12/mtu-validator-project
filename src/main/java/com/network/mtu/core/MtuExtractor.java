@@ -1,3 +1,5 @@
+package com.network.mtu.core;
+
 /**
  * Functional interface for extracting and validating MTU (Maximum Transmission Unit) values
  * from different network configuration types.

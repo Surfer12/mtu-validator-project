@@ -1,4 +1,8 @@
+package com.network.mtu.extractors;
+
 import java.util.Map;
+import com.network.mtu.core.MtuExtractor;
+import com.network.mtu.core.MtuExtractionException;
 
 /**
  * Common implementations of MtuExtractor for various network configurations.
