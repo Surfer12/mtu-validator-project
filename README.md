@@ -1,23 +1,23 @@
 # MTU Validator
 
-[![Java](https://img.shields.io/badge/Java-24-orange.svg)](https://openjdk.java.net/projects/jdk/24/)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
 [![Maven](https://img.shields.io/badge/Maven-3.9+-blue.svg)](https://maven.apache.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#)
 [![Coverage](https://img.shields.io/badge/Coverage-85%25-yellow.svg)](#)
 
-A comprehensive Java library for validating Maximum Transmission Unit (MTU) values across different network configurations and platforms. Built with Java 24 and modern best practices.
+A comprehensive Java library for validating Maximum Transmission Unit (MTU) values across different network configurations and platforms. Built with Java 21 and modern best practices.
 
 ## 🚀 Features
 
 - **Multi-Platform Support**: Currently supports macOS with planned support for Windows 11 AMD64
 - **Multiple Configuration Formats**: JSON, Properties, Map-based, and regex-based extraction
-- **Asynchronous Operations**: Full async support with CompletableFuture and timeout handling
 - **Builder Pattern**: Fluent API design for easy configuration
-- **Comprehensive Validation**: Protocol-specific validation (IPv4, IPv6) with custom rules
+- **Comprehensive Validation**: Protocol-specific validation (IPv4, IPv6, Ethernet) with custom rules
 - **CLI Tool**: Command-line interface for standalone usage
 - **Extensive Documentation**: Complete JavaDoc and usage examples
-- **Modern Java**: Built with Java 24 features including pattern matching and virtual threads
+- **Modern Java**: Built with Java 21 features including pattern matching and enhanced collections
+- **Magic Integration**: Full support for Magic development environment
 
 ## 📋 Table of Contents
 
@@ -48,8 +48,10 @@ ValidationResult result = validator.validateMtuValue(1500);
 
 if (result.isValid()) {
     System.out.println("✓ MTU is valid: " + result.getMessage());
+    System.out.println("Network Type: " + result.getNetworkType().getDisplayName());
 } else {
     System.out.println("✗ MTU is invalid: " + result.getMessage());
+    result.getRecommendations().forEach(rec -> System.out.println("  • " + rec));
 }
 ```
 
@@ -59,28 +61,50 @@ if (result.isValid()) {
 import com.network.mtu.extractors.MtuExtractors;
 import com.network.mtu.core.MtuExtractor;
 
-// JSON configuration
-String jsonConfig = """
-    {
-        "network": {
-            "interface": "eth0",
-            "mtu": 1500
-        }
-    }
-    """;
+// Map-based configuration
+Map<String, Object> config = Map.of(
+    "interface", "eth0",
+    "mtu", 1500,
+    "enabled", true
+);
 
 // Create extractor and validator
-MtuExtractor<String> extractor = MtuExtractors.json()
-    .path("network.mtu")
+MtuExtractor<Map<String, Object>> extractor = MtuExtractors.mapConfig()
+    .key("mtu")
+    .caseInsensitive(true)
+    .defaultValue(1500)
     .build();
 
-MtuValidator<String> validator = MtuValidator.forEthernet();
+MtuValidator<Map<String, Object>> validator = MtuValidator.forEthernet();
 
 // Validate
-ValidationResult result = validator.validateConfig(jsonConfig, extractor);
+ValidationResult result = validator.validateConfig(config, extractor);
 ```
 
 ## 📦 Installation
+
+### Prerequisites
+
+- **Java 21** or later
+- **Maven 3.9** or later
+- **Magic** (recommended for development)
+
+### Magic (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/mtu-validator.git
+cd mtu-validator
+
+# Activate Magic environment
+magic shell
+
+# Build the project
+magic run build
+
+# Run tests
+magic run test
+```
 
 ### Maven
 
@@ -90,7 +114,7 @@ Add the following dependency to your `pom.xml`:
 <dependency>
     <groupId>com.network.mtu</groupId>
     <artifactId>mtu-validator</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -99,15 +123,19 @@ Add the following dependency to your `pom.xml`:
 Add to your `build.gradle`:
 
 ```gradle
-implementation 'com.network.mtu:mtu-validator:1.0.0'
+implementation 'com.network.mtu:mtu-validator:1.0.0-SNAPSHOT'
 ```
 
 ### Standalone JAR
 
-Download the latest release from [GitHub Releases](https://github.com/your-org/mtu-validator/releases) and use as a standalone CLI tool:
+Build from source and use as a standalone CLI tool:
 
 ```bash
-java -jar mtu-validator-1.0.0.jar validate --value 1500
+# Build the JAR
+magic run package
+
+# Run CLI
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 1500
 ```
 
 ## 💡 Usage Examples
@@ -123,43 +151,73 @@ MtuValidator<Integer> customValidator = MtuValidator.<Integer>builder()
     .strictMode(true)
     .validatorName("Custom Business Rules")
     .build();
+
+ValidationResult result = customValidator.validateMtuValue(1200);
 ```
 
-### 2. Map-Based Configuration
+### 2. Different Network Protocols
 
 ```java
-Map<String, Object> config = Map.of(
-    "interface", "eth0",
-    "mtu", 1500,
-    "enabled", true
-);
+// IPv6 validator
+MtuValidator<String> ipv6Validator = MtuValidator.forIpv6();
 
-MtuExtractor<Map<String, Object>> extractor = MtuExtractors.mapConfig()
-    .key("mtu")
-    .caseInsensitive(true)
-    .defaultValue(1500)
+// Jumbo frame validator
+MtuValidator<Map<String, Object>> jumboValidator = MtuValidator.forJumboFrames();
+
+// Custom protocol validator
+MtuValidator<Properties> customValidator = MtuValidator.<Properties>builder()
+    .protocol(MtuValidator.Protocol.PPP)
+    .minMtu(64)
+    .maxMtu(1500)
+    .validatorName("PPPoE Validator")
+    .build();
+```
+
+### 3. Properties Configuration
+
+```java
+Properties props = new Properties();
+props.setProperty("network.mtu", "1500");
+props.setProperty("network.interface", "eth0");
+
+MtuExtractor<Properties> extractor = MtuExtractors.properties()
+    .key("network.mtu")
+    .defaultValue("1500")
     .build();
 
-ValidationResult result = validator.validateConfig(config, extractor);
+MtuValidator<Properties> validator = MtuValidator.forEthernet();
+ValidationResult result = validator.validateConfig(props, extractor);
 ```
 
-### 3. Asynchronous Validation
+### 4. Regex-Based Extraction
 
 ```java
-CompletableFuture<ValidationResult> futureResult = validator
-    .validateConfigAsync(config, extractor);
+String configText = """
+    interface eth0 inet static
+        address 192.168.1.100
+        netmask 255.255.255.0
+        mtu 1500
+        up
+    """;
 
-futureResult.thenAccept(result -> {
-    System.out.println("Async validation completed: " + result.isValid());
-});
+MtuExtractor<String> extractor = MtuExtractors.regex()
+    .pattern("mtu\\s+(\\d+)")
+    .groupIndex(1)
+    .multiline(true)
+    .build();
+
+MtuValidator<String> validator = MtuValidator.forEthernet();
+ValidationResult result = validator.validateConfig(configText, extractor);
 ```
 
-### 4. Platform-Specific (macOS)
+### 5. Platform-Specific (macOS)
 
 ```java
+import com.network.mtu.platform.macos.MacNetworkPreferenceValidator;
+
 // Extract MTU from macOS Wi-Fi service
-MacNetworkServiceMtuExtractor macExtractor = 
-    MacNetworkServiceMtuExtractor.builder()
+MacNetworkPreferenceValidator.MacNetworkServiceMtuExtractor macExtractor = 
+    MacNetworkPreferenceValidator.MacNetworkServiceMtuExtractor.builder()
         .serviceName("Wi-Fi")
         .timeout(5, TimeUnit.SECONDS)
         .build();
@@ -175,52 +233,52 @@ The MTU Validator includes a comprehensive command-line interface:
 
 ```bash
 # Validate a direct MTU value
-java -jar mtu-validator.jar validate --value 1500
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 1500
 
 # Validate with custom range
-java -jar mtu-validator.jar validate --value 9000 --min 1500 --max 9000
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 9000 --min 1500 --max 9000
 
 # Validate for specific protocol
-java -jar mtu-validator.jar validate --value 1280 --protocol IPV6
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 1280 --protocol IPV6
 ```
 
 ### File-Based Validation
 
 ```bash
-# JSON configuration
-java -jar mtu-validator.jar validate --file config.json --format json --path "network.mtu"
+# Map-based configuration (JSON-like)
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --file config.json --format json --path "network.mtu"
 
 # Properties file
-java -jar mtu-validator.jar validate --file network.properties --format properties --path "mtu"
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --file network.properties --format properties --path "mtu"
 
-# Auto-detect format
-java -jar mtu-validator.jar validate --file config.txt --format auto
+# Regex-based text parsing
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --file config.txt --format regex
 ```
 
 ### Output Formats
 
 ```bash
 # Human-readable output (default)
-java -jar mtu-validator.jar validate --value 1500 --output human
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 1500 --output human
 
 # JSON output
-java -jar mtu-validator.jar validate --value 1500 --output json
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 1500 --output json
 
 # CSV output
-java -jar mtu-validator.jar validate --value 1500 --output csv
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar validate --value 1500 --output csv
 ```
 
 ### Information Commands
 
 ```bash
 # Show MTU standards
-java -jar mtu-validator.jar info --standards
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar info --standards
 
 # Show supported formats
-java -jar mtu-validator.jar info --formats
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar info --formats
 
 # Show all information
-java -jar mtu-validator.jar info
+java -jar target/mtu-validator-1.0.0-SNAPSHOT.jar info
 ```
 
 ## 🖥️ Platform Support
@@ -278,22 +336,22 @@ boolean isWindows = platform.toLowerCase().contains("windows");
 
 ## 📄 Configuration Formats
 
-### 1. JSON Format
+### 1. Map-Based Configuration
 
-```json
-{
-  "network": {
-    "interface": "eth0",
-    "mtu": 1500,
-    "protocol": "ipv4"
-  }
-}
+```java
+Map<String, Object> config = Map.of(
+    "interface", "eth0",
+    "mtu", 1500,
+    "protocol", "ipv4"
+);
 ```
 
 **Usage:**
 ```java
-MtuExtractor<String> extractor = MtuExtractors.json()
-    .path("network.mtu")
+MtuExtractor<Map<String, Object>> extractor = MtuExtractors.mapConfig()
+    .key("mtu")
+    .caseInsensitive(true)
+    .defaultValue(1500)
     .build();
 ```
 
@@ -314,30 +372,7 @@ MtuExtractor<Properties> extractor = MtuExtractors.properties()
     .build();
 ```
 
-### 3. Map-Based Configuration
-
-```java
-Map<String, Object> config = Map.of(
-    "interface", "eth0",
-    "mtu", 1500,
-    "nested", Map.of("advanced", Map.of("mtu", 9000))
-);
-```
-
-**Usage:**
-```java
-// Simple key
-MtuExtractor<Map<String, Object>> extractor = MtuExtractors.mapConfig()
-    .key("mtu")
-    .build();
-
-// Nested key with dot notation
-MtuExtractor<Map<String, Object>> nestedExtractor = MtuExtractors.mapConfig()
-    .key("nested.advanced.mtu")
-    .build();
-```
-
-### 4. Regex-Based Text Parsing
+### 3. Regex-Based Text Parsing
 
 ```text
 interface eth0 inet static
@@ -366,7 +401,6 @@ The main validation class with builder pattern support.
 **Key Methods:**
 - `validateMtuValue(int mtu)` - Validate a direct MTU value
 - `validateConfig(T config, MtuExtractor<T> extractor)` - Validate from configuration
-- `validateConfigAsync(...)` - Asynchronous validation
 - `isValidMtu(int mtu)` - Simple boolean validation
 
 **Factory Methods:**
@@ -374,21 +408,30 @@ The main validation class with builder pattern support.
 - `MtuValidator.forJumboFrames()` - Jumbo frame validator
 - `MtuValidator.forIpv6()` - IPv6-specific validator
 
+**Builder Pattern:**
+```java
+MtuValidator.<String>builder()
+    .minMtu(64)
+    .maxMtu(9000)
+    .protocol(MtuValidator.Protocol.ETHERNET)
+    .customValidator(mtu -> mtu % 100 == 0)
+    .strictMode(true)
+    .validatorName("Custom Validator")
+    .build();
+```
+
 #### `MtuExtractor<T>`
 Functional interface for extracting MTU values from configurations.
 
 **Default Methods:**
-- `tryExtractMtu(T config)` - Returns Optional instead of throwing
-- `extractMtuAsync(T config)` - Asynchronous extraction
 - `isStandardMtu(int mtu)` - Validate against standard ranges
-- `determineNetworkType(int mtu)` - Detect network type from MTU
+- `getMetadata()` - Get extractor metadata
 
 #### `MtuExtractors`
 Factory class for common extractor implementations.
 
 **Available Extractors:**
 - `mapConfig()` - Map-based configurations
-- `json()` - JSON string configurations
 - `properties()` - Java Properties configurations
 - `regex()` - Regex-based text parsing
 
@@ -402,9 +445,10 @@ Comprehensive validation result with detailed information.
 - `getMessage()` - Detailed validation message
 - `getMtuValue()` - The validated MTU value
 - `getNetworkType()` - Detected network type
-- `getRecommendations()` - Array of recommendations
+- `getRecommendations()` - List of recommendations
 - `getErrorCode()` - Specific error code if validation failed
 - `getTimestamp()` - Validation timestamp
+- `getValidatorName()` - Name of the validator used
 
 ### Error Handling
 
@@ -423,9 +467,9 @@ Specific exception for MTU extraction failures.
 
 ### Prerequisites
 
-- **Java 24** or later
+- **Java 21** or later
 - **Maven 3.9** or later
-- **Git**
+- **Magic** (recommended)
 
 ### Build Steps
 
@@ -434,36 +478,36 @@ Specific exception for MTU extraction failures.
 git clone https://github.com/your-org/mtu-validator.git
 cd mtu-validator
 
+# Activate Magic environment
+magic shell
+
 # Build the project
-mvn clean compile
+magic run build
 
 # Run tests
-mvn test
-
-# Run integration tests
-mvn verify
+magic run test
 
 # Create executable JAR
-mvn package
+magic run package
 
 # Install to local repository
-mvn install
+magic run install
 ```
 
 ### Development Profiles
 
 ```bash
 # Development build (skip integration tests)
-mvn clean package -Pdev
+magic run dev-build
 
 # CI build (full validation)
-mvn clean verify -Pci
+magic run dev-run
 
 # Performance testing
-mvn clean test -Pperformance
+magic run test -Pperformance
 
 # Release build
-mvn clean deploy -Prelease
+magic run package
 ```
 
 ### Code Quality
@@ -472,16 +516,16 @@ The project includes comprehensive code quality checks:
 
 ```bash
 # Code formatting
-mvn spotless:apply
+magic run lint
 
-# Static analysis
-mvn spotbugs:check pmd:check checkstyle:check
+# Security scanning
+magic run security-scan
 
 # Test coverage
-mvn jacoco:report
+magic run test jacoco:report
 
 # Architecture tests
-mvn test -Dtest=ArchitectureTest
+magic run test -Dtest=ArchitectureTest
 ```
 
 ## 🧪 Testing
@@ -490,33 +534,33 @@ mvn test -Dtest=ArchitectureTest
 
 ```bash
 # Run all unit tests
-mvn test
+magic run test
 
 # Run specific test class
-mvn test -Dtest=MtuValidatorTest
+magic run test -Dtest=MtuValidatorTest
 
 # Run with coverage
-mvn test jacoco:report
+magic run test jacoco:report
 ```
 
 ### Integration Tests
 
 ```bash
 # Run integration tests
-mvn failsafe:integration-test
+magic run test -Dtest=*IT
 
 # Platform-specific tests (requires macOS)
-mvn test -Dtest=MacNetworkPreferenceValidatorIT
+magic run test -Dtest=MacNetworkPreferenceValidatorIT
 ```
 
 ### Performance Tests
 
 ```bash
 # Run JMH benchmarks
-mvn test -Pperformance
+magic run test -Pperformance
 
 # Specific benchmark
-mvn exec:exec -Pperformance -Dexec.args="MtuValidatorBenchmark"
+magic run exec:exec -Pperformance -Dexec.args="MtuValidatorBenchmark"
 ```
 
 ## 🤝 Contributing
@@ -528,7 +572,7 @@ We welcome contributions! Please see our [Contributing Guide](docs/developer/con
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
 3. Make your changes
-4. Run tests: `mvn verify`
+4. Run tests: `magic run test`
 5. Commit your changes: `git commit -m 'Add amazing feature'`
 6. Push to the branch: `git push origin feature/amazing-feature`
 7. Open a Pull Request
@@ -537,7 +581,7 @@ We welcome contributions! Please see our [Contributing Guide](docs/developer/con
 
 - Follow Google Java Style Guide
 - Use the provided `.editorconfig`
-- Run `mvn spotless:apply` before committing
+- Run `magic run lint` before committing
 - Ensure all tests pass
 - Add tests for new functionality
 
@@ -569,12 +613,11 @@ Please use the [GitHub Issues](https://github.com/your-org/mtu-validator/issues)
 
 ### Benchmarks
 
-Recent JMH benchmark results (Java 24, macOS M1):
+Recent JMH benchmark results (Java 21, macOS M1):
 
 ```
 Benchmark                           Mode  Cnt    Score    Error  Units
 MtuValidatorBenchmark.validateDirect  avgt   25   45.2 ±  2.1  ns/op
-MtuValidatorBenchmark.validateJson    avgt   25  892.4 ± 31.7  ns/op
 MtuValidatorBenchmark.validateMap     avgt   25  123.6 ±  5.8  ns/op
 MtuValidatorBenchmark.validateRegex   avgt   25  456.3 ± 18.9  ns/op
 ```
@@ -601,10 +644,10 @@ The project includes automated security scanning:
 
 ```bash
 # OWASP dependency check
-mvn org.owasp:dependency-check-maven:check
+magic run security-scan
 
 # SpotBugs security rules
-mvn spotbugs:check -Dspotbugs.includeFilterFile=security-rules.xml
+magic run lint
 ```
 
 ### Reporting Security Issues
@@ -633,11 +676,12 @@ limitations under the License.
 
 ## 🙏 Acknowledgments
 
-- **Java Community**: For the excellent Java 24 features
+- **Java Community**: For the excellent Java 21 features
 - **Apache Maven**: For the robust build system
 - **PicoCLI**: For the excellent CLI framework
 - **Jackson**: For JSON processing capabilities
 - **JUnit 5**: For the comprehensive testing framework
+- **Magic**: For the excellent development environment
 
 ## 📞 Support
 
