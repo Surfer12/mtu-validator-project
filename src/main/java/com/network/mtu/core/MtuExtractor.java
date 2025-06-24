@@ -20,6 +20,19 @@ public interface MtuExtractor<T> {
     int extractMtu(T config) throws MtuExtractionException;
     
     /**
+     * Gets metadata about this extractor implementation.
+     *
+     * @return The extractor metadata
+     */
+    default ExtractorMetadata getMetadata() {
+        return ExtractorMetadata.builder()
+            .name("Unknown Extractor")
+            .description("No description available")
+            .author("Unknown")
+            .build();
+    }
+    
+    /**
      * Default method to validate the extracted MTU value against common network standards.
      *
      * @param mtuValue The MTU value to validate

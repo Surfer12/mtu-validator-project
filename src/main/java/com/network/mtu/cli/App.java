@@ -3,7 +3,6 @@ package com.network.mtu.cli;
 import com.network.mtu.core.MtuExtractor;
 import com.network.mtu.extractors.MtuExtractors;
 import com.network.mtu.validator.MtuValidator;
-import com.network.mtu.validator.MtuValidator.ValidationResult;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -88,7 +87,7 @@ public class App implements Callable<Integer> {
         private Integer maxMtu = 9000;
         
         @Option(names = {"--protocol"}, description = "Network protocol: ${COMPLETION-CANDIDATES}")
-        private MtuValidator.Protocol protocol = MtuValidator.Protocol.ANY;
+        private MtuValidator.Protocol protocol = MtuValidator.Protocol.ETHERNET;
         
         @Option(names = {"--strict"}, description = "Enable strict validation mode")
         private boolean strictMode = false;
@@ -102,7 +101,7 @@ public class App implements Callable<Integer> {
         @Override
         public Integer call() throws Exception {
             try {
-                ValidationResult result = performValidation();
+                MtuValidator.ValidationResult result = performValidation();
                 outputResult(result);
                 return result.isValid() ? 0 : 1;
             } catch (Exception e) {
@@ -114,7 +113,7 @@ public class App implements Callable<Integer> {
             }
         }
         
-        private ValidationResult performValidation() throws Exception {
+        private MtuValidator.ValidationResult performValidation() throws Exception {
             MtuValidator<Object> validator = MtuValidator.builder()
                     .minMtu(minMtu)
                     .maxMtu(maxMtu)
@@ -132,7 +131,7 @@ public class App implements Callable<Integer> {
             }
         }
         
-        private ValidationResult validateFromFile(MtuValidator<Object> validator) throws Exception {
+        private MtuValidator.ValidationResult validateFromFile(MtuValidator<Object> validator) throws Exception {
             if (!Files.exists(configFile)) {
                 throw new IOException("Configuration file not found: " + configFile);
             }
@@ -142,25 +141,28 @@ public class App implements Callable<Integer> {
             
             return switch (actualFormat) {
                 case JSON -> {
+                    MtuValidator<String> stringValidator = MtuValidator.forEthernet();
                     MtuExtractor<String> extractor = MtuExtractors.json()
                             .path(configPath)
                             .build();
-                    yield validator.validateConfig(content, extractor);
+                    yield stringValidator.validateConfig(content, extractor);
                 }
                 case PROPERTIES -> {
                     Properties props = new Properties();
                     props.load(Files.newBufferedReader(configFile));
+                    MtuValidator<Properties> propsValidator = MtuValidator.forEthernet();
                     MtuExtractor<Properties> extractor = MtuExtractors.properties()
                             .key(configPath)
                             .build();
-                    yield validator.validateConfig(props, extractor);
+                    yield propsValidator.validateConfig(props, extractor);
                 }
                 case REGEX -> {
+                    MtuValidator<String> stringValidator = MtuValidator.forEthernet();
                     MtuExtractor<String> extractor = MtuExtractors.regex()
                             .pattern("mtu[\\s=:]+([0-9]+)")
                             .groupIndex(1)
                             .build();
-                    yield validator.validateConfig(content, extractor);
+                    yield stringValidator.validateConfig(content, extractor);
                 }
                 default -> throw new IllegalArgumentException("Unsupported format: " + actualFormat);
             };
@@ -182,7 +184,7 @@ public class App implements Callable<Integer> {
             }
         }
         
-        private void outputResult(ValidationResult result) {
+        private void outputResult(MtuValidator.ValidationResult result) {
             switch (outputFormat) {
                 case JSON -> outputJson(result);
                 case CSV -> outputCsv(result);
@@ -190,16 +192,17 @@ public class App implements Callable<Integer> {
             }
         }
         
-        private void outputHuman(ValidationResult result) {
+        private void outputHuman(MtuValidator.ValidationResult result) {
             System.out.println("=== MTU Validation Result ===");
             System.out.println("Status: " + (result.isValid() ? "✓ VALID" : "✗ INVALID"));
             System.out.println("MTU Value: " + result.getMtuValue());
             System.out.println("Message: " + result.getMessage());
             
-            result.getNetworkType().ifPresent(type -> 
-                System.out.println("Network Type: " + type));
+            if (result.getNetworkType() != null) {
+                System.out.println("Network Type: " + result.getNetworkType().getDisplayName());
+            }
             
-            if (result.getRecommendations().length > 0) {
+            if (!result.getRecommendations().isEmpty()) {
                 System.out.println("\nRecommendations:");
                 for (String recommendation : result.getRecommendations()) {
                     System.out.println("  • " + recommendation);
@@ -210,16 +213,17 @@ public class App implements Callable<Integer> {
                 System.out.println("\nDetails:");
                 System.out.println("  Validator: " + result.getValidatorName());
                 System.out.println("  Timestamp: " + result.getTimestamp());
-                result.getErrorCode().ifPresent(code -> 
-                    System.out.println("  Error Code: " + code));
+                if (result.getErrorCode() != null) {
+                    System.out.println("  Error Code: " + result.getErrorCode());
+                }
             }
         }
         
-        private void outputJson(ValidationResult result) {
+        private void outputJson(MtuValidator.ValidationResult result) {
             System.out.printf("""
                 {
                   "valid": %s,
-                  "mtuValue": %d,
+                  "mtuValue": %s,
                   "message": "%s",
                   "networkType": "%s",
                   "recommendations": [%s],
@@ -228,24 +232,26 @@ public class App implements Callable<Integer> {
                 }
                 """,
                 result.isValid(),
-                result.getMtuValue(),
+                result.getMtuValue() != null ? result.getMtuValue().toString() : "null",
                 result.getMessage().replace("\"", "\\\""),
-                result.getNetworkType().orElse("unknown"),
-                String.join("\", \"", result.getRecommendations()),
+                result.getNetworkType() != null ? result.getNetworkType().getDisplayName() : "unknown",
+                result.getRecommendations().stream()
+                    .map(rec -> "\"" + rec.replace("\"", "\\\"") + "\"")
+                    .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b),
                 result.getValidatorName(),
                 result.getTimestamp()
             );
         }
         
-        private void outputCsv(ValidationResult result) {
+        private void outputCsv(MtuValidator.ValidationResult result) {
             if (verbose) {
                 System.out.println("valid,mtuValue,message,networkType,validator,timestamp");
             }
-            System.out.printf("%s,%d,\"%s\",%s,%s,%s%n",
+            System.out.printf("%s,%s,\"%s\",%s,%s,%s%n",
                 result.isValid(),
-                result.getMtuValue(),
+                result.getMtuValue() != null ? result.getMtuValue().toString() : "",
                 result.getMessage().replace("\"", "\"\""),
-                result.getNetworkType().orElse("unknown"),
+                result.getNetworkType() != null ? result.getNetworkType().getDisplayName() : "unknown",
                 result.getValidatorName(),
                 result.getTimestamp()
             );

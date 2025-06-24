@@ -7,6 +7,8 @@ import java.time.Instant;
  */
 public class MtuExtractionException extends Exception {
     
+    private static final long serialVersionUID = 1L;
+    
     /**
      * Error codes for different types of extraction failures.
      */

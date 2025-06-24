@@ -3,6 +3,7 @@ package com.network.mtu.platform.macos;
 import com.network.mtu.core.MtuExtractor;
 import com.network.mtu.core.MtuExtractionException;
 import com.network.mtu.core.MtuExtractionException.ErrorCode;
+import com.network.mtu.core.ExtractorMetadata;
 import com.network.mtu.validator.MtuValidator;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -336,7 +337,7 @@ public class MacNetworkPreferenceValidator<T> {
             
             int exitCode = process.exitValue();
             if (exitCode != 0) {
-                throw new MtuExtractionException(ErrorCode.INTERFACE_NOT_FOUND, 
+                throw new MtuExtractionException(ErrorCode.PLATFORM_ERROR, 
                         "Interface not found or ifconfig failed: " + interfaceName);
             }
             
@@ -356,11 +357,10 @@ public class MacNetworkPreferenceValidator<T> {
             return ExtractorMetadata.builder()
                     .name("MacNetworkServiceMtuExtractor")
                     .description("Extracts MTU from macOS network services using networksetup or ifconfig")
-                    .version("1.0.0")
-                    .supportedConfigTypes(String.class)
-                    .supportsAsync(true)
-                    .requiresPrivileges(false)
-                    .supportedPlatforms("macOS")
+                    .author("MTU Validator Team")
+                    .property("platform", "macOS")
+                    .property("useIfconfig", useIfconfig)
+                    .property("timeoutSeconds", timeoutSeconds)
                     .build();
         }
         
@@ -396,15 +396,15 @@ public class MacNetworkPreferenceValidator<T> {
     /**
      * Validation result specific to macOS network preferences.
      */
-    public static class ValidationResult extends MtuValidator.ValidationResult {
+    public static class ValidationResult {
+        private final boolean valid;
+        private final String message;
         private final String platformInfo;
         private final List<String> availableServices;
         
         private ValidationResult(Builder builder) {
-            super(MtuValidator.ValidationResult.builder()
-                    .valid(builder.valid)
-                    .message(builder.message)
-                    .build());
+            this.valid = builder.valid;
+            this.message = builder.message;
             this.platformInfo = builder.platformInfo;
             this.availableServices = builder.availableServices != null ? 
                     new ArrayList<>(builder.availableServices) : new ArrayList<>();
@@ -412,6 +412,14 @@ public class MacNetworkPreferenceValidator<T> {
         
         public static Builder builder() {
             return new Builder();
+        }
+        
+        public boolean isValid() {
+            return valid;
+        }
+        
+        public String getMessage() {
+            return message;
         }
         
         public String getPlatformInfo() {

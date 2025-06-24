@@ -112,7 +112,7 @@ public class MtuValidator<T> {
      * @return A validator for standard Ethernet networks
      */
     public static <T> MtuValidator<T> forEthernet() {
-        return builder()
+        return new Builder<T>()
             .minMtu(64)
             .maxMtu(ETHERNET_MTU)
             .protocol(Protocol.ETHERNET)
@@ -127,7 +127,7 @@ public class MtuValidator<T> {
      * @return A validator for jumbo frame networks
      */
     public static <T> MtuValidator<T> forJumboFrames() {
-        return builder()
+        return new Builder<T>()
             .minMtu(1500)
             .maxMtu(JUMBO_FRAME_MTU)
             .protocol(Protocol.ETHERNET)
@@ -142,7 +142,7 @@ public class MtuValidator<T> {
      * @return A validator for IPv6 networks
      */
     public static <T> MtuValidator<T> forIpv6() {
-        return builder()
+        return new Builder<T>()
             .minMtu(IPV6_MINIMUM_MTU)
             .maxMtu(65535)
             .protocol(Protocol.IPV6)
