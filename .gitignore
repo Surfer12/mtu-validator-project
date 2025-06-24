@@ -1,0 +1,336 @@
+# MTU Validator Project - Git Ignore Configuration
+# See GITIGNORE_PATTERNS.md for detailed documentation and rationale
+
+# =============================================================================
+# JAVA BUILD ARTIFACTS (See GITIGNORE_PATTERNS.md#java-build-artifacts)
+# =============================================================================
+# Maven build directory and artifacts
+target/
+# Compiled Java classes
+*.class
+# Package files
+*.jar
+*.war
+*.ear
+*.nar
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+# Maven wrapper
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# =============================================================================
+# IDE AND EDITOR FILES (See GITIGNORE_PATTERNS.md#ide-and-editor-files)
+# =============================================================================
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+# VS Code
+.vscode/
+# Eclipse
+.settings/
+.project
+.classpath
+.factorypath
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+# Vim/Emacs
+*.swp
+*.swo
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# OPERATING SYSTEM FILES (See GITIGNORE_PATTERNS.md#operating-system-files)
+# =============================================================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# SECURITY AND CREDENTIALS (See GITIGNORE_PATTERNS.md#security-and-credentials)
+# =============================================================================
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+*.truststore
+*.crt
+*.cer
+*.der
+# Environment and configuration files
+.env
+.env.*
+!.env.example
+# Secrets directories
+secrets/
+credentials/
+*.credentials
+# Application properties with sensitive data
+application-local.properties
+application-dev.properties
+application-prod.properties
+*-secret.yml
+*-secret.yaml
+*-secrets.yml
+*-secrets.yaml
+# SSH keys
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+# GPG keys
+*.gpg
+*.asc
+
+# =============================================================================
+# TEMPORARY AND CACHE FILES (See GITIGNORE_PATTERNS.md#temporary-and-cache-files)
+# =============================================================================
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+# Log files
+*.log
+logs/
+log/
+# Cache directories
+.cache/
+*.cache
+# Process files
+*.pid
+*.seed
+*.pid.lock
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =============================================================================
+# DEVELOPMENT TOOLS (See GITIGNORE_PATTERNS.md#development-tools)
+# =============================================================================
+# Node.js (for documentation tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+.pnpm-store/
+# Python (for build scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+# Testing and coverage
+coverage/
+.nyc_output/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# =============================================================================
+# DOCUMENTATION AND REPORTS (See GITIGNORE_PATTERNS.md#documentation-and-reports)
+# =============================================================================
+# Generated documentation
+docs/generated/
+docs/api/generated/
+site/
+_site/
+.jekyll-cache/
+.jekyll-metadata
+# Binary documents (prefer source formats)
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+# Reports and test results
+reports/
+test-results/
+allure-results/
+surefire-reports/
+failsafe-reports/
+# JavaDoc
+javadoc/
+
+# =============================================================================
+# CONTAINER AND DEPLOYMENT (See GITIGNORE_PATTERNS.md#container-and-deployment)
+# =============================================================================
+# Docker
+.docker/
+docker-compose.override.yml
+.dockerignore
+# Kubernetes
+kubernetes/secrets/
+k8s/secrets/
+# Helm
+helm/values-local.yaml
+helm/values-dev.yaml
+helm/values-prod.yaml
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+# Ansible
+*.retry
+# Vagrant
+.vagrant/
+
+# =============================================================================
+# PERFORMANCE AND MONITORING (See GITIGNORE_PATTERNS.md#performance-and-monitoring)
+# =============================================================================
+# Java profiling
+*.hprof
+*.prof
+*.trace
+*.jfr
+# JMeter
+jmeter.log
+# Monitoring data
+monitoring/
+metrics/
+profiling/
+# Performance test results
+performance-results/
+load-test-results/
+
+# =============================================================================
+# PROJECT-SPECIFIC PATTERNS
+# =============================================================================
+# MTU Validator specific temporary files
+mtu-test-results/
+network-configs/local/
+platform-specific-configs/
+# Benchmark results
+benchmarks/results/
+jmh-result.json
+# Generated CLI scripts
+cli-dist/
+native-image/
+
+# =============================================================================
+# DEVELOPMENT ENVIRONMENT
+# =============================================================================
+# Local development overrides
+local.properties
+dev.properties
+# Database files (if using embedded DB for testing)
+*.db
+*.sqlite
+*.sqlite3
+# Local scripts and utilities
+local-scripts/
+dev-tools/local/
+
+# =============================================================================
+# FUTURE-PROOFING PATTERNS
+# =============================================================================
+# Common patterns for tools we might add later
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+# SBT (Scala Build Tool)
+.bloop/
+.metals/
+project/metals.sbt
+# Bazel
+bazel-*
+# Buck
+buck-out/
+# Pants
+.pants.d/
+dist/
+
+# =============================================================================
+# EXCEPTIONS (Files to include despite patterns above)
+# =============================================================================
+# Include important wrapper files
+!gradle/wrapper/gradle-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
+# Include example configuration files
+!config/examples/
+!docs/examples/
+# Include empty directories with .gitkeep
+!.gitkeep
+
+# =============================================================================
+# CUSTOM PROJECT ADDITIONS
+# =============================================================================
+# Add project-specific patterns below this line
+# Remember to document new patterns in GITIGNORE_PATTERNS.md
+
+# pixi environments
+.pixi
+*.egg-info
+# magic environments
+.magic
