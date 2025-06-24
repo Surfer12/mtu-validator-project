@@ -1,13 +1,52 @@
 package com.network.mtu.extractors;
 
 import java.util.Map;
+import java.util.Properties;
+import java.util.regex.Pattern;
 import com.network.mtu.core.MtuExtractor;
 import com.network.mtu.core.MtuExtractionException;
+import com.network.mtu.core.ExtractorMetadata;
 
 /**
  * Common implementations of MtuExtractor for various network configurations.
  */
 public class MtuExtractors {
+    
+    /**
+     * Creates a JSON-based MTU extractor.
+     *
+     * @return A builder for JSON extractor configuration
+     */
+    public static JsonExtractorBuilder json() {
+        return new JsonExtractorBuilder();
+    }
+    
+    /**
+     * Creates a Properties-based MTU extractor.
+     *
+     * @return A builder for Properties extractor configuration
+     */
+    public static PropertiesExtractorBuilder properties() {
+        return new PropertiesExtractorBuilder();
+    }
+    
+    /**
+     * Creates a regex-based MTU extractor.
+     *
+     * @return A builder for regex extractor configuration
+     */
+    public static RegexExtractorBuilder regex() {
+        return new RegexExtractorBuilder();
+    }
+    
+    /**
+     * Creates a Map-based MTU extractor.
+     *
+     * @return A builder for Map extractor configuration
+     */
+    public static MapExtractorBuilder mapConfig() {
+        return new MapExtractorBuilder();
+    }
     
     /**
      * Extracts MTU from a Map-based configuration.
